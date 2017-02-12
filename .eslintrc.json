@@ -10,6 +10,8 @@
   "rules": {
     "strict": 0,
     "global-require": 0,
-    "import/no-extraneous-dependencies": ["error", {"devDependencies": true, "optionalDependencies": true, "peerDependencies": true}]
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": true, "optionalDependencies": true, "peerDependencies": true}],
+    "no-restricted-syntax": 0,
+    "guard-for-in": 0
   }
 }

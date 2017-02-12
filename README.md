@@ -1,4 +1,4 @@
-# awesome-types
+# awesome-json
 
 ## Installation
 ```
@@ -17,7 +17,7 @@ Returns: `Promise`
 Reads a JSON file, and watches for changes. Automatically appends `.json` if the file isn't found.
 
 ```js
-const json = require('awesome-types');
+const json = require('awesome-json');
 
 json.read('test', (err, contents) => {
   if (err) throw err;
@@ -36,7 +36,7 @@ Returns: `Object`
 Reads a JSON file, and watches for changes. Automatically appends `.json` if the file isn't found.
 
 ```js
-const json = require('awesome-types');
+const json = require('awesome-json');
 
 const contents = json.readSync('test');
 

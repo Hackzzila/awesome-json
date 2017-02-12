@@ -1,4 +1,5 @@
 const path = require('path');
+const zlib = require('zlib');
 const yaml = require('js-yaml');
 const BSON = require('bson');
 
@@ -13,40 +14,134 @@ const bson = new BSON();
 const files = {};
 
 class JsonEncoder {
-  static encode(obj) {
+  static encodeSync(obj) {
     return JSON.stringify(obj);
   }
 
-  static decode(string) {
+  static encode(obj, callback) {
+    try {
+      callback(null, this.encodeSync(obj));
+    } catch (err) {
+      callback(err, null);
+    }
+  }
+
+  static decodeSync(string) {
     return JSON.parse(string);
+  }
+
+  static decode(string, callback) {
+    try {
+      callback(null, this.decodeSync(string));
+    } catch (err) {
+      callback(err, null);
+    }
   }
 }
 
 class YamlEncoder {
-  static encode(obj) {
+  static encodeSync(obj) {
     return yaml.dump(obj);
   }
 
-  static decode(string) {
+  static encode(obj, callback) {
+    try {
+      callback(null, this.encodeSync(obj));
+    } catch (err) {
+      callback(err, null);
+    }
+  }
+
+  static decodeSync(string) {
     return yaml.load(string);
+  }
+
+  static decode(string, callback) {
+    try {
+      callback(null, this.decodeSync(string));
+    } catch (err) {
+      callback(err, null);
+    }
   }
 }
 
 class BsonEncoder {
-  static encode(obj) {
+  static encodeSync(obj) {
     return bson.serialize(obj);
   }
 
-  static decode(string) {
+  static encode(obj, callback) {
+    try {
+      callback(null, this.encodeSync(obj));
+    } catch (err) {
+      callback(err, null);
+    }
+  }
+
+  static decodeSync(string) {
     return bson.deserialize(string);
+  }
+
+  static decode(string, callback) {
+    try {
+      callback(null, this.decodeSync(string));
+    } catch (err) {
+      callback(err, null);
+    }
+  }
+}
+
+class ZlibEncoder {
+  constructor(encoderOrFile) {
+    if (typeof encoderOrFile !== 'string') this.encoder = encoderOrFile;
+    else this.encoder = findEncoder(encoderOrFile); // eslint-disable-line
+  }
+
+  encodeSync(obj) {
+    return zlib.deflateSync(this.encoder.encodeSync(obj));
+  }
+
+  encode(obj, callback) {
+    this.encoder.encode(obj, (err, string) => {
+      if (err) callback(err, null); else {
+        zlib.deflate(string, (e, buffer) => {
+          if (e) callback(err, null); else {
+            callback(null, buffer);
+          }
+        });
+      }
+    });
+  }
+
+  decodeSync(string) {
+    return this.encoder.decodeSync(zlib.unzipSync(string));
+  }
+
+  decode(string, callback) {
+    zlib.unzip(string, (err, buffer) => {
+      if (err) callback(err, null); else {
+        this.encoder.decode(buffer.toString(), (e, obj) => {
+          if (e) callback(e, null); else {
+            callback(null, obj);
+          }
+        });
+      }
+    });
   }
 }
 
 process.on('exit', () => {
   for (const file in files) {
-    files[file].fs.writeFileSync(file, files[file].encoder.encode(files[file].content));
+    files[file].fs.writeFileSync(file, files[file].encoder.encodeSync(files[file].content));
   }
-})
+});
+
+function findEncoder(file) {
+  if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') return YamlEncoder;
+  else if (path.parse(file).ext === '.bson') return BsonEncoder;
+  else if (path.parse(file).ext === '.gz') return new ZlibEncoder(path.parse(file).name);
+  return JsonEncoder;
+}
 
 function watch(file, contents, opts, encoder) {
   const options = Object.assign({ writeFrequency: 5000 }, opts);
@@ -58,9 +153,12 @@ function watch(file, contents, opts, encoder) {
   if (options.writeFrequency !== 0) {
     setInterval(() => {
       if (onFile !== current) {
-        fs.writeFile(file, encoder.encode(current), (err) => {
-          if (err) throw err;
-          onFile = current;
+        encoder.encode(current, (error, encoded) => {
+          if (error) throw error;
+          fs.writeFile(file, encoded, (err) => {
+            if (err) throw err;
+            onFile = current;
+          });
         });
       }
     }, options.writeFrequency).unref();
@@ -75,8 +173,11 @@ function watch(file, contents, opts, encoder) {
       if (options.writeFrequency !== 0) {
         current = obj;
       } else {
-        fs.writeFile(file, encoder.encode(obj), (err) => {
-          if (err) throw err;
+        encoder.encode(obj, (error, encoded) => {
+          if (error) throw error;
+          fs.writeFile(file, encoded, (err) => {
+            if (err) throw err;
+          });
         });
       }
 
@@ -86,11 +187,16 @@ function watch(file, contents, opts, encoder) {
     deleteProperty: (obj, prop) => {
       delete obj[prop]; // eslint-disable-line
 
+      files[file] = { content: obj, encoder, fs };
+
       if (options.writeFrequency !== 0) {
         current = obj;
       } else {
-        fs.writeFile(file, encoder.encode(obj), (err) => {
-          if (err) throw err;
+        encoder.encode(obj, (error, encoded) => {
+          if (error) throw error;
+          fs.writeFile(file, encoded, (err) => {
+            if (err) throw err;
+          });
         });
       }
 
@@ -127,36 +233,33 @@ module.exports = {
             reject(e);
           }
 
-          let obj;
-          try {
-            obj = encoder.decode(c) || {};
-          } catch (err) {
-            if (typeof callback === 'function') callback(err, null);
-            reject(err);
-          }
+          encoder.decode(c, (err, obj) => {
+            if (err) {
+              if (typeof callback === 'function') callback(err, null);
+              reject(err);
+            }
 
-          const result = watch(file, obj, options, encoder);
-          if (typeof callback === 'function') callback(null, result);
-          resolve(result);
+            const result = watch(file, obj || {}, options, encoder);
+            if (typeof callback === 'function') callback(null, result);
+            resolve(result);
+          });
         });
       } else if (error) {
         if (typeof callback === 'function') callback(error, null);
         reject(error);
       } else {
-        if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') encoder = YamlEncoder;
-        else if (path.parse(file).ext === '.bson') encoder = BsonEncoder;
+        encoder = findEncoder(file);
 
-        let obj;
-        try {
-          obj = encoder.decode(contents) || {};
-        } catch (err) {
-          if (typeof callback === 'function') callback(err, null);
-          reject(err);
-        }
+        encoder.decode(contents, (err, obj) => {
+          if (err) {
+            if (typeof callback === 'function') callback(err, null);
+            reject(err);
+          }
 
-        const result = watch(file, obj, options, encoder);
-        if (typeof callback === 'function') callback(null, result);
-        resolve(result);
+          const result = watch(file, obj || {}, options, encoder);
+          if (typeof callback === 'function') callback(null, result);
+          resolve(result);
+        });
       }
     });
   }),
@@ -183,17 +286,8 @@ module.exports = {
       }
     }
 
-    let encoder = JsonEncoder;
-    if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') encoder = YamlEncoder;
-    else if (path.parse(file).ext === '.bson') encoder = BsonEncoder;
+    const encoder = findEncoder(file);
 
-    let obj;
-    try {
-      obj = encoder.decode(contents) || {};
-    } catch (err) {
-      throw err;
-    }
-
-    return watch(file, obj, options, encoder);
+    return watch(file, encoder.decodeSync(contents) || {}, options, encoder);
   },
 };
