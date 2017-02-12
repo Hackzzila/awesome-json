@@ -1,7 +1,7 @@
 {
   "name": "awesome-json",
   "version": "0.1.0",
-  "description": "Awesome JSON writing and reading",
+  "description": "Awesome JSON (plus BSON, YAML, and MsgPack) writing and reading",
   "main": "index.js",
   "scripts": {
     "test": "npm run lint",
@@ -14,7 +14,10 @@
   },
   "keywords": [
     "awesome",
-    "json"
+    "json",
+    "yaml",
+    "bson",
+    "msgpack"
   ],
   "author": "Hackzzila",
   "license": "MIT",
@@ -30,10 +33,12 @@
     "eslint-plugin-react": "^6.5.0"
   },
   "optionalDependencies": {
-    "graceful-fs": "^4.1.11"
+    "graceful-fs": "^4.1.11",
+    "msgpack": "^1.0.2"
   },
   "dependencies": {
     "bson": "^1.0.4",
-    "js-yaml": "^3.8.1"
+    "js-yaml": "^3.8.1",
+    "msgpack-js": "^0.3.0"
   }
 }

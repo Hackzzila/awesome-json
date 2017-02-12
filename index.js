@@ -10,6 +10,65 @@ try {
   defaultFs = require('fs');
 }
 
+let MsgpackEncoder;
+try {
+  const msgpack = require('msgpack');
+
+  MsgpackEncoder = class Encoder {
+    static encodeSync(obj) {
+      return msgpack.pack(obj);
+    }
+
+    static encode(obj, callback) {
+      try {
+        callback(null, this.encodeSync(obj));
+      } catch (err) {
+        callback(err, null);
+      }
+    }
+
+    static decodeSync(string) {
+      return msgpack.unpack(string);
+    }
+
+    static decode(string, callback) {
+      try {
+        callback(null, this.decodeSync(string));
+      } catch (err) {
+        callback(err, null);
+      }
+    }
+  };
+} catch (_) {
+  const msgpack = require('msgpack-js');
+
+  MsgpackEncoder = class Encoder {
+    static encodeSync(obj) {
+      return msgpack.encode(obj);
+    }
+
+    static encode(obj, callback) {
+      try {
+        callback(null, this.encodeSync(obj));
+      } catch (err) {
+        callback(err, null);
+      }
+    }
+
+    static decodeSync(string) {
+      return msgpack.decode(string);
+    }
+
+    static decode(string, callback) {
+      try {
+        callback(null, this.decodeSync(string));
+      } catch (err) {
+        callback(err, null);
+      }
+    }
+  };
+}
+
 const bson = new BSON();
 const files = {};
 
@@ -139,6 +198,7 @@ process.on('exit', () => {
 function findEncoder(file) {
   if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') return YamlEncoder;
   else if (path.parse(file).ext === '.bson') return BsonEncoder;
+  else if (path.parse(file).ext === '.mp') return MsgpackEncoder;
   else if (path.parse(file).ext === '.gz') return new ZlibEncoder(path.parse(file).name);
   return JsonEncoder;
 }
