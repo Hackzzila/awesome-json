@@ -4,7 +4,7 @@
 [![optionalDependencies Status](https://david-dm.org/hackzzila/awesome-json/optional-status.svg)](https://david-dm.org/hackzzila/awesome-json?type=optional)
 
 ## About
-Awesome-JSON is a lightweight system for using JSON as a database. If you need a basic read/write system, Awesome-JSON is perfect for you.
+awesome-json is a simple system for reading JSON (plus BSON and YAML) files, and automatically writing to the JSON (or BSON/YAML) file whenever the object is updated. awesome-json supports gzip compression as well.
 
 
 ## Installation
@@ -28,7 +28,7 @@ const json = require('awesome-json');
 
 json.read('test', (err, contents) => {
   if (err) throw err;
-  contents.baz = 1;
+  contents.baz = 1; // This change is automatically written to the file.
 });
 ```
 
@@ -47,5 +47,5 @@ const json = require('awesome-json');
 
 const contents = json.readSync('test');
 
-contents.baz = 1;
+contents.baz = 1; // This change is automatically written to the file.
 ```
