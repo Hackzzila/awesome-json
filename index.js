@@ -37,6 +37,20 @@ function watch(file, contents, opts) {
 
       return true;
     },
+
+    deleteProperty: (obj, prop) => {
+      delete obj[prop]; // eslint-disable-line
+
+      if (options.writeFrequency !== 0) {
+        current = obj;
+      } else {
+        fs.writeFile(file, JSON.stringify(obj), (err) => {
+          if (err) throw err;
+        });
+      }
+
+      return true;
+    },
   });
 }
 
