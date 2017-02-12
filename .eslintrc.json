@@ -8,6 +8,8 @@
     "node": true
   },
   "rules": {
-    "strict": 0
+    "strict": 0,
+    "global-require": 0,
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": true, "optionalDependencies": true, "peerDependencies": true}]
   }
 }

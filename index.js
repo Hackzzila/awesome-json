@@ -1,7 +1,13 @@
-const fs = require('fs');
+let defaultFs;
+try {
+  defaultFs = require('graceful-fs');
+} catch (_) {
+  defaultFs = require('fs');
+}
 
 function watch(file, contents, opts) {
   const options = Object.assign({ writeFrequency: 5000 }, opts);
+  const fs = options.fs || defaultFs;
 
   let onFile = Object.assign({}, contents);
   let current = Object.assign({}, contents);
@@ -35,43 +41,83 @@ function watch(file, contents, opts) {
 }
 
 module.exports = {
-  read: (file, opts, cb) => new Promise((resolve, reject) => {
+  read: (filename, opts, cb) => new Promise((resolve, reject) => {
+    let file = filename;
     let callback = cb;
-    let options = opts;
+    let options = opts || {};
 
     if (typeof opts === 'function') {
       callback = opts;
       options = {};
     }
 
-    fs.readFile(file, (error, contents) => {
-      if (error) {
+    if (typeof options === 'string') {
+      options = { encoding: options };
+    }
+
+    const fs = options.fs || defaultFs;
+
+    fs.readFile(file, { encoding: options.encoding }, (error, contents) => {
+      if (error && error.code === 'ENOENT') {
+        file = `${file}.json`;
+        fs.readFile(file, { encoding: options.encoding }, (e, c) => {
+          if (e) {
+            if (typeof callback === 'function') callback(e, null);
+            reject(e);
+          }
+
+          let json;
+          try {
+            json = JSON.parse(c);
+          } catch (err) {
+            if (typeof callback === 'function') callback(err, null);
+            reject(err);
+          }
+
+          const result = watch(file, json, options);
+          if (typeof callback === 'function') callback(null, result);
+          resolve(result);
+        });
+      } else if (error) {
         if (typeof callback === 'function') callback(error, null);
         reject(error);
-      }
+      } else {
+        let json;
+        try {
+          json = JSON.parse(contents);
+        } catch (err) {
+          if (typeof callback === 'function') callback(err, null);
+          reject(err);
+        }
 
-      let json;
-      try {
-        json = JSON.parse(contents);
-      } catch (err) {
-        if (typeof callback === 'function') callback(err, null);
-        reject(err);
+        const result = watch(file, json, options);
+        if (typeof callback === 'function') callback(null, result);
+        resolve(result);
       }
-
-      const result = watch(file, json, options);
-      if (typeof callback === 'function') callback(null, result);
-      resolve(result);
     });
   }),
 
-  readSync: (file, opts) => {
-    let options = opts;
+  readSync: (filename, opts) => {
+    let file = filename;
+    let options = opts || {};
 
-    if (typeof opts === 'object') {
-      options = {};
+    if (typeof options === 'string') {
+      options = { encoding: options };
     }
 
-    const contents = fs.readFileSync(file);
+    const fs = options.fs || defaultFs;
+
+    let contents;
+    try {
+      contents = fs.readFileSync(file, { encoding: options.encoding });
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        contents = fs.readFileSync(`${file}.json`, { encoding: options.encoding });
+        file = `${file}.json`;
+      } else {
+        throw error;
+      }
+    }
 
     let json;
     try {

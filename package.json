@@ -4,6 +4,8 @@
   "description": "Awesome JSON writing and reading",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint index.js",
+    "lint:fix": "eslint --fix index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -26,5 +28,8 @@
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^3.0.2",
     "eslint-plugin-react": "^6.5.0"
+  },
+  "optionalDependencies": {
+    "graceful-fs": "^4.1.11"
   }
 }
