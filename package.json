@@ -1,0 +1,30 @@
+{
+  "name": "awesome-json",
+  "version": "0.1.0",
+  "description": "Awesome JSON writing and reading",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hackzzila/awesome-json.git"
+  },
+  "keywords": [
+    "awesome",
+    "json"
+  ],
+  "author": "Hackzzila",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Hackzzila/awesome-json/issues"
+  },
+  "homepage": "https://github.com/Hackzzila/awesome-json#readme",
+  "devDependencies": {
+    "eslint": "^3.13.0",
+    "eslint-config-airbnb": "^14.0.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^3.0.2",
+    "eslint-plugin-react": "^6.5.0"
+  }
+}
