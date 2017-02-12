@@ -12,7 +12,7 @@ try {
 
 let MsgpackEncoder;
 try {
-  const msgpack = require('msgpack');
+  const msgpack = require('msgpack'); // eslint-disable-line import/no-unresolved
 
   MsgpackEncoder = class Encoder {
     static encodeSync(obj) {
