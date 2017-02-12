@@ -1,6 +1,6 @@
 {
   "name": "awesome-json",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Awesome JSON (plus BSON, YAML, and MsgPack) writing and reading",
   "main": "index.js",
   "scripts": {
