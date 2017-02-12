@@ -10,6 +10,7 @@ try {
 }
 
 const bson = new BSON();
+const files = {};
 
 class JsonEncoder {
   static encode(obj) {
@@ -41,6 +42,12 @@ class BsonEncoder {
   }
 }
 
+process.on('exit', () => {
+  for (const file in files) {
+    files[file].fs.writeFileSync(file, files[file].encoder.encode(files[file].content));
+  }
+})
+
 function watch(file, contents, opts, encoder) {
   const options = Object.assign({ writeFrequency: 5000 }, opts);
   const fs = options.fs || defaultFs;
@@ -56,12 +63,14 @@ function watch(file, contents, opts, encoder) {
           onFile = current;
         });
       }
-    }, options.writeFrequency);
+    }, options.writeFrequency).unref();
   }
 
   return new Proxy(contents, {
     set: (obj, prop, value) => {
       obj[prop] = value; // eslint-disable-line
+
+      files[file] = { content: obj, encoder, fs };
 
       if (options.writeFrequency !== 0) {
         current = obj;
