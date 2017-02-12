@@ -3,6 +3,9 @@
 [![dependencies Status](https://david-dm.org/hackzzila/awesome-json/status.svg)](https://david-dm.org/hackzzila/awesome-json)
 [![optionalDependencies Status](https://david-dm.org/hackzzila/awesome-json/optional-status.svg)](https://david-dm.org/hackzzila/awesome-json?type=optional)
 
+## About
+Awesome-JSON is a lightweight system for using JSON as a database. If you need a basic read/write system, Awesome-JSON is perfect for you.
+
 
 ## Installation
 ```
