@@ -4,9 +4,9 @@
   "description": "Awesome JSON writing and reading",
   "main": "index.js",
   "scripts": {
+    "test": "npm run lint",
     "lint": "eslint index.js",
-    "lint:fix": "eslint --fix index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint:fix": "eslint --fix index.js"
   },
   "repository": {
     "type": "git",

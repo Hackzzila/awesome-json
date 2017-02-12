@@ -1,4 +1,8 @@
 # awesome-json
+[![Build Status](https://travis-ci.org/Hackzzila/awesome-json.svg?branch=master)](https://travis-ci.org/Hackzzila/awesome-json)
+[![dependencies Status](https://david-dm.org/hackzzila/awesome-json/status.svg)](https://david-dm.org/hackzzila/awesome-json)
+[![optionalDependencies Status](https://david-dm.org/hackzzila/awesome-json/optional-status.svg)](https://david-dm.org/hackzzila/awesome-json?type=optional)
+
 
 ## Installation
 ```
