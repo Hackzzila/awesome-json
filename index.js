@@ -1,3 +1,7 @@
+const path = require('path');
+const yaml = require('js-yaml');
+const BSON = require('bson');
+
 let defaultFs;
 try {
   defaultFs = require('graceful-fs');
@@ -5,7 +9,39 @@ try {
   defaultFs = require('fs');
 }
 
-function watch(file, contents, opts) {
+const bson = new BSON();
+
+class JsonEncoder {
+  static encode(obj) {
+    return JSON.stringify(obj);
+  }
+
+  static decode(string) {
+    return JSON.parse(string);
+  }
+}
+
+class YamlEncoder {
+  static encode(obj) {
+    return yaml.dump(obj);
+  }
+
+  static decode(string) {
+    return yaml.load(string);
+  }
+}
+
+class BsonEncoder {
+  static encode(obj) {
+    return bson.serialize(obj);
+  }
+
+  static decode(string) {
+    return bson.deserialize(string);
+  }
+}
+
+function watch(file, contents, opts, encoder) {
   const options = Object.assign({ writeFrequency: 5000 }, opts);
   const fs = options.fs || defaultFs;
 
@@ -15,7 +51,7 @@ function watch(file, contents, opts) {
   if (options.writeFrequency !== 0) {
     setInterval(() => {
       if (onFile !== current) {
-        fs.writeFile(file, JSON.stringify(current), (err) => {
+        fs.writeFile(file, encoder.encode(current), (err) => {
           if (err) throw err;
           onFile = current;
         });
@@ -30,7 +66,7 @@ function watch(file, contents, opts) {
       if (options.writeFrequency !== 0) {
         current = obj;
       } else {
-        fs.writeFile(file, JSON.stringify(obj), (err) => {
+        fs.writeFile(file, encoder.encode(obj), (err) => {
           if (err) throw err;
         });
       }
@@ -44,7 +80,7 @@ function watch(file, contents, opts) {
       if (options.writeFrequency !== 0) {
         current = obj;
       } else {
-        fs.writeFile(file, JSON.stringify(obj), (err) => {
+        fs.writeFile(file, encoder.encode(obj), (err) => {
           if (err) throw err;
         });
       }
@@ -71,6 +107,8 @@ module.exports = {
 
     const fs = options.fs || defaultFs;
 
+    let encoder = JsonEncoder;
+
     fs.readFile(file, { encoding: options.encoding }, (error, contents) => {
       if (error && error.code === 'ENOENT') {
         file = `${file}.json`;
@@ -80,15 +118,15 @@ module.exports = {
             reject(e);
           }
 
-          let json;
+          let obj;
           try {
-            json = JSON.parse(c);
+            obj = encoder.decode(c) || {};
           } catch (err) {
             if (typeof callback === 'function') callback(err, null);
             reject(err);
           }
 
-          const result = watch(file, json, options);
+          const result = watch(file, obj, options, encoder);
           if (typeof callback === 'function') callback(null, result);
           resolve(result);
         });
@@ -96,15 +134,18 @@ module.exports = {
         if (typeof callback === 'function') callback(error, null);
         reject(error);
       } else {
-        let json;
+        if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') encoder = YamlEncoder;
+        else if (path.parse(file).ext === '.bson') encoder = BsonEncoder;
+
+        let obj;
         try {
-          json = JSON.parse(contents);
+          obj = encoder.decode(contents) || {};
         } catch (err) {
           if (typeof callback === 'function') callback(err, null);
           reject(err);
         }
 
-        const result = watch(file, json, options);
+        const result = watch(file, obj, options, encoder);
         if (typeof callback === 'function') callback(null, result);
         resolve(result);
       }
@@ -133,13 +174,17 @@ module.exports = {
       }
     }
 
-    let json;
+    let encoder = JsonEncoder;
+    if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') encoder = YamlEncoder;
+    else if (path.parse(file).ext === '.bson') encoder = BsonEncoder;
+
+    let obj;
     try {
-      json = JSON.parse(contents);
+      obj = encoder.decode(contents) || {};
     } catch (err) {
       throw err;
     }
 
-    return watch(file, json, options);
+    return watch(file, obj, options, encoder);
   },
 };

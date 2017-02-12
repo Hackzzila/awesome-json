@@ -31,5 +31,9 @@
   },
   "optionalDependencies": {
     "graceful-fs": "^4.1.11"
+  },
+  "dependencies": {
+    "bson": "^1.0.4",
+    "js-yaml": "^3.8.1"
   }
 }
