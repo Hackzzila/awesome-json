@@ -1,3 +1,5 @@
+'use strict';
+
 const path = require('path');
 const zlib = require('zlib');
 const yaml = require('js-yaml');
