@@ -18,6 +18,7 @@ Returns: `Promise`
 
 `options`  
 * `fs`: any fs module backwards compatible with `fs`
+* `space`: (JSON only) space argument accepted by [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
 * `encoding`: encoding to use while reading the file
 * `writeFrequency` (default: 5000): the length of the interval to write changes in milliseconds, writes immediately if `0`
 
@@ -37,6 +38,7 @@ Returns: `Object`
 
 `options`  
 * `fs`: any fs module backwards compatible with `fs`
+* `space`: (JSON only) space argument accepted by [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
 * `encoding`: encoding to use while reading the file
 * `writeFrequency` (default: 5000): the length of the interval to write changes in milliseconds, writes immediately if `0`
 

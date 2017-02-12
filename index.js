@@ -21,9 +21,9 @@ try {
       return msgpack.pack(obj);
     }
 
-    static encode(obj, callback) {
+    static encode(obj, options, callback) {
       try {
-        callback(null, this.encodeSync(obj));
+        callback(null, this.encodeSync(obj, options));
       } catch (err) {
         callback(err, null);
       }
@@ -33,9 +33,9 @@ try {
       return msgpack.unpack(string);
     }
 
-    static decode(string, callback) {
+    static decode(string, options, callback) {
       try {
-        callback(null, this.decodeSync(string));
+        callback(null, this.decodeSync(string, options));
       } catch (err) {
         callback(err, null);
       }
@@ -75,13 +75,13 @@ const bson = new BSON();
 const files = {};
 
 class JsonEncoder {
-  static encodeSync(obj) {
-    return JSON.stringify(obj);
+  static encodeSync(obj, options) {
+    return JSON.stringify(obj, null, options.space);
   }
 
-  static encode(obj, callback) {
+  static encode(obj, options, callback) {
     try {
-      callback(null, this.encodeSync(obj));
+      callback(null, this.encodeSync(obj, options));
     } catch (err) {
       callback(err, null);
     }
@@ -91,9 +91,9 @@ class JsonEncoder {
     return JSON.parse(string);
   }
 
-  static decode(string, callback) {
+  static decode(string, options, callback) {
     try {
-      callback(null, this.decodeSync(string));
+      callback(null, this.decodeSync(string, options));
     } catch (err) {
       callback(err, null);
     }
@@ -105,9 +105,9 @@ class YamlEncoder {
     return yaml.dump(obj);
   }
 
-  static encode(obj, callback) {
+  static encode(obj, options, callback) {
     try {
-      callback(null, this.encodeSync(obj));
+      callback(null, this.encodeSync(obj, options));
     } catch (err) {
       callback(err, null);
     }
@@ -117,9 +117,9 @@ class YamlEncoder {
     return yaml.load(string);
   }
 
-  static decode(string, callback) {
+  static decode(string, options, callback) {
     try {
-      callback(null, this.decodeSync(string));
+      callback(null, this.decodeSync(string, options));
     } catch (err) {
       callback(err, null);
     }
@@ -131,9 +131,9 @@ class BsonEncoder {
     return bson.serialize(obj);
   }
 
-  static encode(obj, callback) {
+  static encode(obj, options, callback) {
     try {
-      callback(null, this.encodeSync(obj));
+      callback(null, this.encodeSync(obj, options));
     } catch (err) {
       callback(err, null);
     }
@@ -143,9 +143,9 @@ class BsonEncoder {
     return bson.deserialize(string);
   }
 
-  static decode(string, callback) {
+  static decode(string, options, callback) {
     try {
-      callback(null, this.decodeSync(string));
+      callback(null, this.decodeSync(string, options));
     } catch (err) {
       callback(err, null);
     }
@@ -158,12 +158,12 @@ class ZlibEncoder {
     else this.encoder = findEncoder(encoderOrFile); // eslint-disable-line
   }
 
-  encodeSync(obj) {
-    return zlib.deflateSync(this.encoder.encodeSync(obj));
+  encodeSync(obj, options) {
+    return zlib.deflateSync(this.encoder.encodeSync(obj, options));
   }
 
-  encode(obj, callback) {
-    this.encoder.encode(obj, (err, string) => {
+  encode(obj, options, callback) {
+    this.encoder.encode(obj, options, (err, string) => {
       if (err) callback(err, null); else {
         zlib.deflate(string, (e, buffer) => {
           if (e) callback(err, null); else {
@@ -174,14 +174,14 @@ class ZlibEncoder {
     });
   }
 
-  decodeSync(string) {
-    return this.encoder.decodeSync(zlib.unzipSync(string));
+  decodeSync(string, options) {
+    return this.encoder.decodeSync(zlib.unzipSync(string, options));
   }
 
-  decode(string, callback) {
+  decode(string, options, callback) {
     zlib.unzip(string, (err, buffer) => {
       if (err) callback(err, null); else {
-        this.encoder.decode(buffer.toString(), (e, obj) => {
+        this.encoder.decode(buffer.toString(), options, (e, obj) => {
           if (e) callback(e, null); else {
             callback(null, obj);
           }
@@ -193,7 +193,8 @@ class ZlibEncoder {
 
 process.on('exit', () => {
   for (const file in files) {
-    files[file].fs.writeFileSync(file, files[file].encoder.encodeSync(files[file].content));
+    files[file].fs.writeFileSync(file,
+      files[file].encoder.encodeSync(files[file].content, files[file].options));
   }
 });
 
@@ -215,7 +216,7 @@ function watch(file, contents, opts, encoder) {
   if (options.writeFrequency !== 0) {
     setInterval(() => {
       if (onFile !== current) {
-        encoder.encode(current, (error, encoded) => {
+        encoder.encode(current, options, (error, encoded) => {
           if (error) throw error;
           fs.writeFile(file, encoded, (err) => {
             if (err) throw err;
@@ -230,12 +231,12 @@ function watch(file, contents, opts, encoder) {
     set: (obj, prop, value) => {
       obj[prop] = value; // eslint-disable-line
 
-      files[file] = { content: obj, encoder, fs };
+      files[file] = { content: obj, encoder, fs, options };
 
       if (options.writeFrequency !== 0) {
         current = obj;
       } else {
-        encoder.encode(obj, (error, encoded) => {
+        encoder.encode(obj, options, (error, encoded) => {
           if (error) throw error;
           fs.writeFile(file, encoded, (err) => {
             if (err) throw err;
@@ -249,12 +250,12 @@ function watch(file, contents, opts, encoder) {
     deleteProperty: (obj, prop) => {
       delete obj[prop]; // eslint-disable-line
 
-      files[file] = { content: obj, encoder, fs };
+      files[file] = { content: obj, encoder, fs, options };
 
       if (options.writeFrequency !== 0) {
         current = obj;
       } else {
-        encoder.encode(obj, (error, encoded) => {
+        encoder.encode(obj, options, (error, encoded) => {
           if (error) throw error;
           fs.writeFile(file, encoded, (err) => {
             if (err) throw err;
@@ -295,7 +296,7 @@ module.exports = {
             reject(e);
           }
 
-          encoder.decode(c, (err, obj) => {
+          encoder.decode(c, options, (err, obj) => {
             if (err) {
               if (typeof callback === 'function') callback(err, null);
               reject(err);
@@ -312,7 +313,7 @@ module.exports = {
       } else {
         encoder = findEncoder(file);
 
-        encoder.decode(contents, (err, obj) => {
+        encoder.decode(contents, options, (err, obj) => {
           if (err) {
             if (typeof callback === 'function') callback(err, null);
             reject(err);
@@ -350,6 +351,6 @@ module.exports = {
 
     const encoder = findEncoder(file);
 
-    return watch(file, encoder.decodeSync(contents) || {}, options, encoder);
+    return watch(file, encoder.decodeSync(contents, options) || {}, options, encoder);
   },
 };
