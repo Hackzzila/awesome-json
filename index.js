@@ -71,6 +71,55 @@ try {
   };
 }
 
+let EtfEncoder;
+try {
+  const erlpack = require('erlpack'); // eslint-disable-line import/no-unresolved
+
+  EtfEncoder = class Encoder {
+    static encodeSync(obj) {
+      return erlpack.pack(obj);
+    }
+
+    static encode(obj, options, callback) {
+      try {
+        callback(null, this.encodeSync(obj, options));
+      } catch (err) {
+        callback(err, null);
+      }
+    }
+
+    static decodeSync(string) {
+      return erlpack.unpack(string);
+    }
+
+    static decode(string, options, callback) {
+      try {
+        callback(null, this.decodeSync(string, options));
+      } catch (err) {
+        callback(err, null);
+      }
+    }
+  };
+} catch (_) {
+  EtfEncoder = class Encoder {
+    static encodeSync() {
+      throw new Error('erlpack not installed');
+    }
+
+    static encode(obj, callback) {
+      callback(new Error('erlpack not installed'), null);
+    }
+
+    static decodeSync() {
+      throw new Error('erlpack not installed');
+    }
+
+    static decode(string, callback) {
+      callback(new Error('erlpack not installed'), null);
+    }
+  };
+}
+
 const bson = new BSON();
 const files = {};
 
@@ -202,6 +251,7 @@ function findEncoder(file) {
   if (path.parse(file).ext === '.yaml' || path.parse(file).ext === '.yml') return YamlEncoder;
   else if (path.parse(file).ext === '.bson') return BsonEncoder;
   else if (path.parse(file).ext === '.mp') return MsgpackEncoder;
+  else if (path.parse(file).ext === '.etf') return EtfEncoder;
   else if (path.parse(file).ext === '.gz') return new ZlibEncoder(path.parse(file).name);
   return JsonEncoder;
 }

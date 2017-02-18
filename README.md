@@ -4,7 +4,7 @@
 [![optionalDependencies Status](https://david-dm.org/hackzzila/awesome-json/optional-status.svg)](https://david-dm.org/hackzzila/awesome-json?type=optional)
 
 ## About
-awesome-json is a simple system for reading JSON (plus BSON, YAML, and MsgPack) files, and automatically writing to the JSON (or BSON/YAML/MsgPack) file whenever the object is updated. awesome-json supports gzip compression as well.
+awesome-json is a simple system for reading JSON (plus BSON, YAML, ETF, and MsgPack) files, and automatically writing to the JSON (or BSON/YAML/ETF/MsgPack) file whenever the object is updated. awesome-json supports gzip compression as well.
 
 
 ## Installation
