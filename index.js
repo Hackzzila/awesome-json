@@ -403,4 +403,11 @@ module.exports = {
 
     return watch(file, encoder.decodeSync(contents, options) || {}, options, encoder);
   },
+
+  JsonEncoder,
+  BsonEncoder,
+  YamlEncoder,
+  EtfEncoder,
+  MsgpackEncoder,
+  ZlibEncoder,
 };
