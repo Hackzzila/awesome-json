@@ -202,9 +202,9 @@ class BsonEncoder {
 }
 
 class ZlibEncoder {
-  constructor(encoderOrFile) {
+  constructor(encoderOrFile, options) {
     if (typeof encoderOrFile !== 'string') this.encoder = encoderOrFile;
-    else this.encoder = findEncoder(encoderOrFile); // eslint-disable-line
+    else this.encoder = options.encoder || findEncoder(encoderOrFile); // eslint-disable-line
   }
 
   encodeSync(obj, options) {
@@ -361,7 +361,7 @@ module.exports = {
         if (typeof callback === 'function') callback(error, null);
         reject(error);
       } else {
-        encoder = findEncoder(file);
+        encoder = options.encoder || findEncoder(file);
 
         encoder.decode(contents, options, (err, obj) => {
           if (err) {
@@ -399,7 +399,7 @@ module.exports = {
       }
     }
 
-    const encoder = findEncoder(file);
+    const encoder = options.encoder || findEncoder(file);
 
     return watch(file, encoder.decodeSync(contents, options) || {}, options, encoder);
   },
